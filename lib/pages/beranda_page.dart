@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../navigation/kerangka_navigasi.dart';
 
 class BerandaPage extends StatelessWidget {
   const BerandaPage({super.key});
@@ -16,13 +17,16 @@ class BerandaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Beranda'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () => Navigator.pushNamed(context, '/tidak-ada-route'),
-          ),
-        ],
+        // leading = tombol di KIRI AppBar
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          tooltip: 'Buka menu',
+          onPressed: () {
+            // Buka drawer milik KerangkaNavigasi (Scaffold induk)
+            KerangkaNavigasi.scaffoldKey.currentState?.openDrawer();
+          },
+        ),
+        title: const Text('Beranda'), // judul tetap ada
       ),
       body: GridView.count(
         padding: const EdgeInsets.all(12),
