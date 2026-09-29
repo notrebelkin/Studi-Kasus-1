@@ -7,12 +7,19 @@ import 'app_routes.dart';
 class KerangkaNavigasi extends StatefulWidget {
   const KerangkaNavigasi({super.key});
 
+  /// KUNCI STATIS — satu-satunya kunci. Dipakai Scaffold induk
+  /// DAN oleh halaman anak untuk membuka drawer.
+  static final GlobalKey<ScaffoldState> scaffoldKey =
+      GlobalKey<ScaffoldState>();
+
   @override
   State<KerangkaNavigasi> createState() => _KerangkaNavigasiState();
 }
 
 class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
   int _indeksAktif = 0;
+
+  // ❌ TIDAK ADA _scaffoldKey instance lagi.
 
   static const List<Widget> _halaman = [
     BerandaPage(),
@@ -21,11 +28,12 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
   ];
 
   void _pindahTujuan(int indeks) {
+    if (indeks == _indeksAktif) return;
     setState(() => _indeksAktif = indeks);
   }
 
   void _bukaMenuPendukung(String route) {
-    Navigator.pop(context); // tutup drawer dulu
+    Navigator.pop(context);
     Navigator.pushNamed(context, route);
   }
 
@@ -59,9 +67,15 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
       },
       children: [
         const Padding(
-          padding: EdgeInsets.all(16),
-          child: Text('Nusantara Cerdas',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+          child: Row(
+            children: [
+              Icon(Icons.location_city, color: Colors.teal),
+              SizedBox(width: 12),
+              Text('Nusantara Cerdas',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
         ),
         const NavigationDrawerDestination(
           icon: Icon(Icons.home_outlined),
@@ -78,9 +92,12 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
           selectedIcon: Icon(Icons.person),
           label: Text('Warga'),
         ),
-        const Divider(),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+          child: Divider(),
+        ),
         ListTile(
-          leading: const Icon(Icons.settings),
+          leading: const Icon(Icons.settings_outlined),
           title: const Text('Pengaturan Kota'),
           onTap: () => _bukaMenuPendukung(AppRoutes.pengaturanKota),
         ),
@@ -103,12 +120,12 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final layarLebar = constraints.maxWidth >= 600;
-
         final konten = _halaman[_indeksAktif];
 
+        // ---------- LAYAR LEBAR ----------
         if (layarLebar) {
-          // Layout lebar: NavigationRail di kiri
           return Scaffold(
+            key: KerangkaNavigasi.scaffoldKey,   // ← STATIC key
             drawer: _buildDrawer(),
             body: Row(
               children: [
@@ -116,9 +133,15 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
                   selectedIndex: _indeksAktif,
                   onDestinationSelected: _pindahTujuan,
                   labelType: NavigationRailLabelType.all,
-                  leading: IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  leading: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: IconButton(
+                      icon: const Icon(Icons.menu),
+                      tooltip: 'Menu',
+                      onPressed: () => KerangkaNavigasi
+                          .scaffoldKey.currentState
+                          ?.openDrawer(),           // ← STATIC key
+                    ),
                   ),
                   destinations: const [
                     NavigationRailDestination(
@@ -145,8 +168,9 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
           );
         }
 
-        // Layout sempit: NavigationBar di bawah
+        // ---------- LAYAR SEMPIT ----------
         return Scaffold(
+          key: KerangkaNavigasi.scaffoldKey,     // ← STATIC key (bukan _scaffoldKey)
           drawer: _buildDrawer(),
           body: konten,
           bottomNavigationBar: NavigationBar(
