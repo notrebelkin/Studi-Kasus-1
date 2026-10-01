@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/pengajuan_model.dart';
 import '../pages/beranda_page.dart';
 import '../pages/layanan_page.dart';
 import '../pages/warga_page.dart';
@@ -7,8 +10,6 @@ import 'app_routes.dart';
 class KerangkaNavigasi extends StatefulWidget {
   const KerangkaNavigasi({super.key});
 
-  /// KUNCI STATIS — satu-satunya kunci. Dipakai Scaffold induk
-  /// DAN oleh halaman anak untuk membuka drawer.
   static final GlobalKey<ScaffoldState> scaffoldKey =
       GlobalKey<ScaffoldState>();
 
@@ -19,13 +20,13 @@ class KerangkaNavigasi extends StatefulWidget {
 class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
   int _indeksAktif = 0;
 
-  // ❌ TIDAK ADA _scaffoldKey instance lagi.
-
   static const List<Widget> _halaman = [
     BerandaPage(),
     LayananPage(),
     WargaPage(),
   ];
+
+  static const List<String> _judul = ['Beranda', 'Layanan', 'Warga'];
 
   void _pindahTujuan(int indeks) {
     if (indeks == _indeksAktif) return;
@@ -73,7 +74,8 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
               Icon(Icons.location_city, color: Colors.teal),
               SizedBox(width: 12),
               Text('Nusantara Cerdas',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -92,10 +94,7 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
           selectedIcon: Icon(Icons.person),
           label: Text('Warga'),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-          child: Divider(),
-        ),
+        const Divider(),
         ListTile(
           leading: const Icon(Icons.settings_outlined),
           title: const Text('Pengaturan Kota'),
@@ -115,6 +114,22 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
     );
   }
 
+  /// Ikon Warga + badge jumlah pengajuan.
+  /// context.select hanya rebuild widget ini saat totalPengajuan berubah,
+  /// BUKAN seluruh NavigationBar/NavigationRail.
+  Widget _ikonWargaDenganBadge(IconData icon) {
+    final total = context.select<PengajuanModel, int>(
+      (m) => m.totalPengajuan,
+    );
+
+    if (total == 0) return Icon(icon);
+
+    return Badge(
+      label: Text('$total'),
+      child: Icon(icon),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -122,10 +137,9 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
         final layarLebar = constraints.maxWidth >= 600;
         final konten = _halaman[_indeksAktif];
 
-        // ---------- LAYAR LEBAR ----------
         if (layarLebar) {
           return Scaffold(
-            key: KerangkaNavigasi.scaffoldKey,   // ← STATIC key
+            key: KerangkaNavigasi.scaffoldKey,
             drawer: _buildDrawer(),
             body: Row(
               children: [
@@ -133,31 +147,29 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
                   selectedIndex: _indeksAktif,
                   onDestinationSelected: _pindahTujuan,
                   labelType: NavigationRailLabelType.all,
-                  leading: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: IconButton(
-                      icon: const Icon(Icons.menu),
-                      tooltip: 'Menu',
-                      onPressed: () => KerangkaNavigasi
-                          .scaffoldKey.currentState
-                          ?.openDrawer(),           // ← STATIC key
-                    ),
+                  leading: IconButton(
+                    icon: const Icon(Icons.menu),
+                    tooltip: 'Menu',
+                    onPressed: () => KerangkaNavigasi
+                        .scaffoldKey.currentState
+                        ?.openDrawer(),
                   ),
-                  destinations: const [
-                    NavigationRailDestination(
+                  destinations: [
+                    const NavigationRailDestination(
                       icon: Icon(Icons.home_outlined),
                       selectedIcon: Icon(Icons.home),
                       label: Text('Beranda'),
                     ),
-                    NavigationRailDestination(
+                    const NavigationRailDestination(
                       icon: Icon(Icons.grid_view_outlined),
                       selectedIcon: Icon(Icons.grid_view),
                       label: Text('Layanan'),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.person_outline),
-                      selectedIcon: Icon(Icons.person),
-                      label: Text('Warga'),
+                      icon: _ikonWargaDenganBadge(Icons.person_outline),
+                      selectedIcon:
+                          _ikonWargaDenganBadge(Icons.person),
+                      label: const Text('Warga'),
                     ),
                   ],
                 ),
@@ -168,28 +180,27 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
           );
         }
 
-        // ---------- LAYAR SEMPIT ----------
         return Scaffold(
-          key: KerangkaNavigasi.scaffoldKey,     // ← STATIC key (bukan _scaffoldKey)
+          key: KerangkaNavigasi.scaffoldKey,
           drawer: _buildDrawer(),
           body: konten,
           bottomNavigationBar: NavigationBar(
             selectedIndex: _indeksAktif,
             onDestinationSelected: _pindahTujuan,
-            destinations: const [
-              NavigationDestination(
+            destinations: [
+              const NavigationDestination(
                 icon: Icon(Icons.home_outlined),
                 selectedIcon: Icon(Icons.home),
                 label: 'Beranda',
               ),
-              NavigationDestination(
+              const NavigationDestination(
                 icon: Icon(Icons.grid_view_outlined),
                 selectedIcon: Icon(Icons.grid_view),
                 label: 'Layanan',
               ),
               NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                selectedIcon: Icon(Icons.person),
+                icon: _ikonWargaDenganBadge(Icons.person_outline),
+                selectedIcon: _ikonWargaDenganBadge(Icons.person),
                 label: 'Warga',
               ),
             ],
