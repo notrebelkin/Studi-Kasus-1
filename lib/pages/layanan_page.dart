@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/favorit_model.dart';
 import '../navigation/app_routes.dart';
 
 class Layanan {
@@ -11,11 +14,12 @@ class Layanan {
 
 const Map<String, List<Layanan>> dataLayanan = {
   'Perizinan': [
-    Layanan('Izin Usaha Mikro', 'Dinas Penanaman Modal & PTSP', '08.00 - 15.00',
-        'Pengajuan izin usaha mikro dan kecil.'),
-    Layanan('Izin Mendirikan Bangunan', 'Dinas Tata Ruang', '08.00 - 14.00',
-        'Persetujuan konstruksi bangunan.'),
-    Layanan('Izin Keramaian', 'Satpol PP', '24 Jam', 'Izin kegiatan keramaian.'),
+    Layanan('Izin Usaha Mikro', 'Dinas Penanaman Modal & PTSP',
+        '08.00 - 15.00', 'Pengajuan izin usaha mikro dan kecil.'),
+    Layanan('Izin Mendirikan Bangunan', 'Dinas Tata Ruang',
+        '08.00 - 14.00', 'Persetujuan konstruksi bangunan.'),
+    Layanan('Izin Keramaian', 'Satpol PP', '24 Jam',
+        'Izin kegiatan keramaian.'),
   ],
   'Kesehatan': [
     Layanan('Pendaftaran Vaksin', 'Dinas Kesehatan', '07.00 - 13.00',
@@ -45,6 +49,10 @@ class LayananPage extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Layanan Publik'),
+          leading: IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => _bukaDrawer(context),
+          ),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Perizinan'),
@@ -57,34 +65,75 @@ class LayananPage extends StatelessWidget {
           children: dataLayanan.keys.map((kategori) {
             return ListView(
               children: dataLayanan[kategori]!.map((l) {
-                return ListTile(
-                  leading: const Icon(Icons.description),
-                  title: Text(l.nama),
-                  subtitle: Text(l.dinas),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () async {
-                    final hasil = await Navigator.pushNamed(
-                      context,
-                      AppRoutes.detailLayanan,
-                      arguments: {
-                        'nama': l.nama,
-                        'dinas': l.dinas,
-                        'jam': l.jam,
-                        'keterangan': l.keterangan,
-                      },
-                    );
-                    if (hasil != null && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(hasil.toString())),
-                      );
-                    }
-                  },
-                );
+                return _KartuLayanan(layanan: l);
               }).toList(),
             );
           }).toList(),
         ),
       ),
+    );
+  }
+
+  void _bukaDrawer(BuildContext context) {
+    // Akses drawer induk lewat static scaffold key.
+    // Perlu import kerangka_navigasi.dart bila belum.
+    // (Lihat Modul II.)
+  }
+}
+
+class _KartuLayanan extends StatelessWidget {
+  final Layanan layanan;
+  const _KartuLayanan({required this.layanan});
+
+  @override
+  Widget build(BuildContext context) {
+    // watch: rebuild saat status favorit berubah.
+    final favoritModel = context.watch<FavoritModel>();
+    final sudahFavorit = favoritModel.apakahFavorit(layanan.nama);
+
+    return ListTile(
+      leading: const Icon(Icons.description),
+      title: Text(layanan.nama),
+      subtitle: Text(layanan.dinas),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Ikon bintang favorit.
+          IconButton(
+            icon: Icon(
+              sudahFavorit ? Icons.star : Icons.star_border,
+              color: sudahFavorit ? Colors.amber : null,
+            ),
+            tooltip: sudahFavorit
+                ? 'Batalkan favorit'
+                : 'Tandai favorit',
+            onPressed: () {
+              // read: hanya memanggil aksi, tidak ikut rebuild.
+              context
+                  .read<FavoritModel>()
+                  .toggle(layanan.nama);
+            },
+          ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+      onTap: () async {
+        final hasil = await Navigator.pushNamed(
+          context,
+          AppRoutes.detailLayanan,
+          arguments: {
+            'nama': layanan.nama,
+            'dinas': layanan.dinas,
+            'jam': layanan.jam,
+            'keterangan': layanan.keterangan,
+          },
+        );
+        if (hasil != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(hasil.toString())),
+          );
+        }
+      },
     );
   }
 }
