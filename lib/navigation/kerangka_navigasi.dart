@@ -74,8 +74,7 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
               Icon(Icons.location_city, color: Colors.teal),
               SizedBox(width: 12),
               Text('Nusantara Cerdas',
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -114,16 +113,10 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
     );
   }
 
-  /// Ikon Warga + badge jumlah pengajuan.
-  /// context.select hanya rebuild widget ini saat totalPengajuan berubah,
-  /// BUKAN seluruh NavigationBar/NavigationRail.
-  Widget _ikonWargaDenganBadge(IconData icon) {
-    final total = context.select<PengajuanModel, int>(
-      (m) => m.totalPengajuan,
-    );
-
+  /// HANYA menerima parameter `total`.
+  /// TIDAK memanggil context.select di sini.
+  Widget _ikonWarga(IconData icon, int total) {
     if (total == 0) return Icon(icon);
-
     return Badge(
       label: Text('$total'),
       child: Icon(icon),
@@ -132,6 +125,11 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ context.select dipanggil di sini, di dalam build()
+    final total = context.select<PengajuanModel, int>(
+      (m) => m.totalPengajuan,
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final layarLebar = constraints.maxWidth >= 600;
@@ -166,9 +164,8 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
                       label: Text('Layanan'),
                     ),
                     NavigationRailDestination(
-                      icon: _ikonWargaDenganBadge(Icons.person_outline),
-                      selectedIcon:
-                          _ikonWargaDenganBadge(Icons.person),
+                      icon: _ikonWarga(Icons.person_outline, total),
+                      selectedIcon: _ikonWarga(Icons.person, total),
                       label: const Text('Warga'),
                     ),
                   ],
@@ -199,8 +196,8 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
                 label: 'Layanan',
               ),
               NavigationDestination(
-                icon: _ikonWargaDenganBadge(Icons.person_outline),
-                selectedIcon: _ikonWargaDenganBadge(Icons.person),
+                icon: _ikonWarga(Icons.person_outline, total),
+                selectedIcon: _ikonWarga(Icons.person, total),
                 label: 'Warga',
               ),
             ],
