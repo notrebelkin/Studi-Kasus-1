@@ -10,135 +10,136 @@ class WargaPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const Card(
-          child: ListTile(
-            leading: CircleAvatar(child: Icon(Icons.person)),
-            title: Text('Budi Santoso'),
-            subtitle: Text('NIK: 3201xxxxxxxxxxxx'),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Warga')),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+        children: [
+          const Card(
+            child: ListTile(
+              leading: CircleAvatar(child: Icon(Icons.person)),
+              title: Text('Budi Santoso'),
+              subtitle: Text('NIK: 3201xxxxxxxxxxxx'),
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-        // ================= Layanan Favorit =================
-        const Text('Layanan Favorit',
-            style:
-                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Consumer<FavoritModel>(
-          builder: (context, favorit, _) {
-            if (favorit.daftarFavorit.isEmpty) {
-              return const Card(
-                child: ListTile(
-                  leading: Icon(Icons.star_border),
-                  title: Text('Belum ada layanan favorit'),
-                  subtitle: Text(
-                      'Tandai layanan dari tab Layanan untuk menambahkannya.'),
-                ),
-              );
-            }
+          // Pintasan ke fitur baru
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _pintasan(context, Icons.chat, 'Tanya Petugas',
+                  AppRoutes.tanyaPetugas),
+              _pintasan(context, Icons.location_on, 'Lokasi Kantor',
+                  AppRoutes.lokasiKantor),
+              _pintasan(context, Icons.bar_chart, 'Statistik',
+                  AppRoutes.statistikLayanan),
+            ],
+          ),
+          const SizedBox(height: 20),
 
-            return Card(
-              child: Column(
-                children: favorit.daftarFavorit.map((nama) {
-                  return ListTile(
-                    leading:
-                        const Icon(Icons.star, color: Colors.amber),
-                    title: Text(nama),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.close),
-                      tooltip: 'Hapus dari favorit',
-                      onPressed: () => context
-                          .read<FavoritModel>()
-                          .batalTandai(nama),
-                    ),
-                  );
-                }).toList(),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-
-        // ================= Keranjang Pengajuan =================
-        const Text('Pengajuan Aktif',
-            style:
-                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Consumer<PengajuanModel>(
-          builder: (context, pengajuan, _) {
-            if (pengajuan.totalPengajuan == 0) {
-              return const Card(
-                child: ListTile(
-                  leading: Icon(Icons.inbox_outlined),
-                  title: Text('Belum ada pengajuan'),
-                  subtitle: Text(
-                      'Ajukan layanan dari halaman rincian layanan.'),
-                ),
-              );
-            }
-
-            return Card(
-              child: Column(
-                children: [
-                  ...pengajuan.daftarPengajuan.map((nama) {
+          // Favorit
+          const Text('Layanan Favorit',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Consumer<FavoritModel>(
+            builder: (context, favorit, _) {
+              if (favorit.daftarFavorit.isEmpty) {
+                return const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.star_border),
+                    title: Text('Belum ada layanan favorit'),
+                  ),
+                );
+              }
+              return Card(
+                child: Column(
+                  children: favorit.daftarFavorit.map((nama) {
                     return ListTile(
-                      leading: const Icon(Icons.send_outlined),
+                      leading:
+                          const Icon(Icons.star, color: Colors.amber),
                       title: Text(nama),
                       trailing: IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () => context
-                            .read<PengajuanModel>()
-                            .hapus(nama),
+                            .read<FavoritModel>()
+                            .batalTandai(nama),
                       ),
                     );
-                  }),
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Total: ${pengajuan.totalPengajuan} layanan',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        FilledButton(
-                          onPressed: () {
-                            context
-                                .read<PengajuanModel>()
-                                .kosongkan();
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Pengajuan dikirim ke dinas terkait'),
-                              ),
-                            );
-                          },
-                          child: const Text('Kirim'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
 
-        // ================= Tombol Riwayat =================
-        FilledButton.icon(
-          icon: const Icon(Icons.history),
-          label: const Text('Riwayat Laporan'),
-          onPressed: () =>
-              Navigator.pushNamed(context, AppRoutes.riwayatLaporan),
-        ),
-      ],
+          // Riwayat pengajuan
+          const Text('Riwayat Pengajuan',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Consumer<PengajuanModel>(
+            builder: (context, model, _) {
+              if (model.daftarPengajuan.isEmpty) {
+                return const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.inbox_outlined),
+                    title: Text('Belum ada pengajuan'),
+                    subtitle: Text('Tekan tombol + untuk membuat pengajuan.'),
+                  ),
+                );
+              }
+              return Column(
+                children: model.daftarPengajuan.map((p) {
+                  return GestureDetector(
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.detailPengajuan,
+                      arguments: p,
+                    ),
+                    onLongPress: () {
+                      context.read<PengajuanModel>().tandaiSelesai(p.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${p.namaLayanan} ditandai selesai'),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      child: ListTile(
+                        leading: Icon(
+                          p.selesai
+                              ? Icons.check_circle
+                              : Icons.pending_actions,
+                          color: p.selesai ? Colors.green : Colors.orange,
+                        ),
+                        title: Text(p.namaLayanan),
+                        subtitle: Text(
+                            '${p.bidang} • ${p.sesiKunjungan} • ${p.namaLengkap}'),
+                        trailing: const Icon(Icons.chevron_right),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.add),
+        label: const Text('Pengajuan Baru'),
+        onPressed: () =>
+            Navigator.pushNamed(context, AppRoutes.formPengajuan),
+      ),
+    );
+  }
+
+  Widget _pintasan(BuildContext context, IconData icon, String label, String route) {
+    return ActionChip(
+      avatar: Icon(icon, size: 18),
+      label: Text(label),
+      onPressed: () => Navigator.pushNamed(context, route),
     );
   }
 }
