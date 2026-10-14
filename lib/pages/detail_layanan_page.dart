@@ -12,26 +12,48 @@ class DetailLayananPage extends StatefulWidget {
 }
 
 class _DetailLayananPageState extends State<DetailLayananPage> {
+  final _namaCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  bool _setuju = false;
+  String _sesi = 'Pagi';
   bool _sedangMengirim = false;
 
-  Future<void> _ajukan() async {
+  @override
+  void dispose() {
+    _namaCtrl.dispose();
+    _emailCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Validasi: semua kolom terisi, email mengandung "@", checkbox dicentang.
+  bool get _formValid {
+    final namaOk = _namaCtrl.text.trim().isNotEmpty;
+    final emailOk = _emailCtrl.text.contains('@') &&
+        _emailCtrl.text.trim().isNotEmpty;
+    return namaOk && emailOk && _setuju;
+  }
+
+  Future<void> _kirim() async {
     setState(() => _sedangMengirim = true);
 
-    // Simulasi proses pengiriman ke dinas (mis. request jaringan).
+    // Simulasi pengiriman.
     await Future.delayed(const Duration(milliseconds: 1200));
-
     if (!mounted) return;
 
-    // Simpan ke keranjang pengajuan.
-    context.read<PengajuanModel>().tambah(widget.data['nama']);
+    // Simpan ke PengajuanModel.
+    context.read<PengajuanModel>().tambah(Pengajuan(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      namaLayanan: widget.data['nama'],
+      bidang: widget.data['bidang'] ?? 'Perizinan',
+      namaLengkap: _namaCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      sesiKunjungan: _sesi,
+    ));
 
     setState(() => _sedangMengirim = false);
 
-    // Kirim nilai balik ke halaman Layanan (SnackBar).
-    Navigator.pop(
-      context,
-      'Permohonan ${widget.data['nama']} telah diajukan',
-    );
+    if (!mounted) return;
+    Navigator.pop(context, 'Pengajuan ${widget.data['nama']} berhasil dikirim');
   }
 
   @override
@@ -39,54 +61,99 @@ class _DetailLayananPageState extends State<DetailLayananPage> {
     final data = widget.data;
 
     return Scaffold(
-      appBar: AppBar(title: Text(data['nama'] ?? 'Detail')),
-      body: Padding(
+      appBar: AppBar(title: Text(data['nama'] ?? 'Detail Layanan')),
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(data['nama'],
-                style: const TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            _baris('Dinas Penanggung Jawab', data['dinas']),
-            _baris('Jam Operasional', data['jam']),
-            _baris('Keterangan', data['keterangan']),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                icon: _sedangMengirim
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.send),
-                label: Text(_sedangMengirim
-                    ? 'Mengirim...'
-                    : 'Ajukan Permohonan'),
-                onPressed: _sedangMengirim ? null : _ajukan,
-              ),
+        children: [
+          Text(data['nama'],
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          _infoBaris('Dinas Penanggung Jawab', data['dinas'] ?? '-'),
+          _infoBaris('Jam Operasional', data['jam'] ?? '-'),
+          _infoBaris('Keterangan', data['keterangan'] ?? '-'),
+          const Divider(height: 32),
+
+          const Text('Formulir Pengajuan',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+
+          TextField(
+            controller: _namaCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Nama Lengkap',
+              border: OutlineInputBorder(),
             ),
-          ],
-        ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _emailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              helperText: 'Harus mengandung karakter @',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 16),
+
+          const Text('Sesi Kunjungan',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          RadioListTile<String>(
+            title: const Text('Pagi (08.00 - 11.00)'),
+            value: 'Pagi',
+            groupValue: _sesi,
+            onChanged: (v) => setState(() => _sesi = v!),
+          ),
+          RadioListTile<String>(
+            title: const Text('Siang (11.00 - 14.00)'),
+            value: 'Siang',
+            groupValue: _sesi,
+            onChanged: (v) => setState(() => _sesi = v!),
+          ),
+          RadioListTile<String>(
+            title: const Text('Sore (14.00 - 16.00)'),
+            value: 'Sore',
+            groupValue: _sesi,
+            onChanged: (v) => setState(() => _sesi = v!),
+          ),
+
+          CheckboxListTile(
+            title: const Text('Saya menyetujui penggunaan data pribadi'),
+            value: _setuju,
+            onChanged: (v) => setState(() => _setuju = v ?? false),
+          ),
+
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: _sedangMengirim
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.send),
+              label: Text(_sedangMengirim ? 'Mengirim...' : 'Kirim Pengajuan'),
+              onPressed: (_formValid && !_sedangMengirim) ? _kirim : null,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _baris(String label, String nilai) {
+  Widget _infoBaris(String label, String nilai) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style:
-                  const TextStyle(fontSize: 12, color: Colors.grey)),
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
           Text(nilai, style: const TextStyle(fontSize: 16)),
         ],
       ),
