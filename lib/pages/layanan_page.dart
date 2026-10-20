@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../models/favorit_model.dart';
+import '../bloc/favorit_bloc.dart';
 import '../navigation/app_routes.dart';
 
 class Layanan {
@@ -49,10 +49,6 @@ class LayananPage extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Layanan Publik'),
-          leading: IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => _bukaDrawer(context),
-          ),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Perizinan'),
@@ -65,7 +61,7 @@ class LayananPage extends StatelessWidget {
           children: dataLayanan.keys.map((kategori) {
             return ListView(
               children: dataLayanan[kategori]!.map((l) {
-                return _KartuLayanan(layanan: l);
+                return _KartuLayanan(layanan: l, bidang: kategori);
               }).toList(),
             );
           }).toList(),
@@ -73,24 +69,15 @@ class LayananPage extends StatelessWidget {
       ),
     );
   }
-
-  void _bukaDrawer(BuildContext context) {
-    // Akses drawer induk lewat static scaffold key.
-    // Perlu import kerangka_navigasi.dart bila belum.
-    // (Lihat Modul II.)
-  }
 }
 
 class _KartuLayanan extends StatelessWidget {
   final Layanan layanan;
-  const _KartuLayanan({required this.layanan});
+  final String bidang;
+  const _KartuLayanan({required this.layanan, required this.bidang});
 
   @override
   Widget build(BuildContext context) {
-    // watch: rebuild saat status favorit berubah.
-    final favoritModel = context.watch<FavoritModel>();
-    final sudahFavorit = favoritModel.apakahFavorit(layanan.nama);
-
     return ListTile(
       leading: const Icon(Icons.description),
       title: Text(layanan.nama),
@@ -98,20 +85,28 @@ class _KartuLayanan extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Ikon bintang favorit.
-          IconButton(
-            icon: Icon(
-              sudahFavorit ? Icons.star : Icons.star_border,
-              color: sudahFavorit ? Colors.amber : null,
-            ),
-            tooltip: sudahFavorit
-                ? 'Batalkan favorit'
-                : 'Tandai favorit',
-            onPressed: () {
-              // read: hanya memanggil aksi, tidak ikut rebuild.
-              context
-                  .read<FavoritModel>()
-                  .toggle(layanan.nama);
+          // BlocBuilder dengan buildWhen hanya rebuild saat status favorit
+          // layanan ini berubah.
+          BlocBuilder<FavoritBloc, Set<String>>(
+            buildWhen: (prev, curr) =>
+                prev.contains(layanan.nama) != curr.contains(layanan.nama),
+            builder: (context, favorit) {
+              final sudah = favorit.contains(layanan.nama);
+              return IconButton(
+                icon: Icon(
+                  sudah ? Icons.star : Icons.star_border,
+                  color: sudah ? Colors.amber : null,
+                ),
+                tooltip: sudah ? 'Batalkan favorit' : 'Tandai favorit',
+                onPressed: () {
+                  final bloc = context.read<FavoritBloc>();
+                  if (sudah) {
+                    bloc.add(BatalTandaiLayanan(layanan.nama));
+                  } else {
+                    bloc.add(TandaiLayanan(layanan.nama));
+                  }
+                },
+              );
             },
           ),
           const Icon(Icons.chevron_right),
