@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'models/favorit_model.dart';
-import 'models/pengajuan_model.dart';
-import 'models/chat_model.dart';
+import 'bloc/favorit_bloc.dart';
+import 'bloc/pengajuan_bloc.dart';
 import 'navigation/app_routes.dart';
 
 void main() => runApp(const NusantaraCerdasApp());
@@ -13,16 +12,18 @@ class NusantaraCerdasApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
+    return MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => FavoritModel()),
-        ChangeNotifierProvider(create: (_) => PengajuanModel()),
-        ChangeNotifierProvider(create: (_) => ChatModel()),
+        BlocProvider(create: (_) => FavoritBloc()),
+        BlocProvider(create: (_) => PengajuanBloc()),
       ],
       child: MaterialApp(
         title: 'Nusantara Cerdas',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.teal),
+        theme: ThemeData(
+          useMaterial3: true,
+          colorSchemeSeed: Colors.teal,
+        ),
         initialRoute: AppRoutes.beranda,
         routes: AppRoutes.daftarRoute(),
         onGenerateRoute: AppRoutes.bentukRoute,
