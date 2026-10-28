@@ -1,29 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// ---------- Event ----------
-abstract class FavoritEvent {
-  const FavoritEvent();
-}
-
+// --- Event ---
+abstract class FavoritEvent {}
 class TandaiLayanan extends FavoritEvent {
   final String namaLayanan;
-  const TandaiLayanan(this.namaLayanan);
+  TandaiLayanan(this.namaLayanan);
 }
-
 class BatalTandaiLayanan extends FavoritEvent {
   final String namaLayanan;
-  const BatalTandaiLayanan(this.namaLayanan);
+  BatalTandaiLayanan(this.namaLayanan);
 }
 
-// ---------- State ----------
-// State cukup berupa Set<String>. Kita bisa memakai tipe langsung
-// atau wrapper class. Di sini memakai Set<String> agar ringkas.
+// --- BLoC ---
 class FavoritBloc extends Bloc<FavoritEvent, Set<String>> {
   FavoritBloc() : super(const <String>{}) {
     on<TandaiLayanan>((event, emit) {
-      emit({...state, event.namaLayanan});
+      emit({...state, event.namaLayanan}); // Emit Set baru
     });
-
     on<BatalTandaiLayanan>((event, emit) {
       final baru = {...state}..remove(event.namaLayanan);
       emit(baru);
