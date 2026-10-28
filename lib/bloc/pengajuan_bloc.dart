@@ -1,51 +1,27 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// ---------- Event ----------
-abstract class PengajuanEvent {
-  const PengajuanEvent();
-}
-
+// --- Event ---
+abstract class PengajuanEvent {}
 class TambahPengajuan extends PengajuanEvent {
   final String namaLayanan;
-  final String bidang;   // opsional, untuk statistik
-  const TambahPengajuan(this.namaLayanan, {this.bidang = 'Perizinan'});
+  TambahPengajuan(this.namaLayanan);
 }
+class KosongkanPengajuan extends PengajuanEvent {}
 
-class HapusPengajuan extends PengajuanEvent {
-  final String namaLayanan;
-  const HapusPengajuan(this.namaLayanan);
-}
-
-class KosongkanPengajuan extends PengajuanEvent {
-  const KosongkanPengajuan();
-}
-
-// ---------- State ----------
+// --- State ---
 class PengajuanState {
   final List<String> daftar;
   const PengajuanState(this.daftar);
-
   int get totalPengajuan => daftar.length;
-
-  List<String> get daftarPengajuan => List.unmodifiable(daftar);
 }
 
-// ---------- BLoC ----------
+// --- BLoC ---
 class PengajuanBloc extends Bloc<PengajuanEvent, PengajuanState> {
   PengajuanBloc() : super(const PengajuanState([])) {
     on<TambahPengajuan>((event, emit) {
-      if (state.daftar.contains(event.namaLayanan)) return; // no duplikat
-      final baru = [...state.daftar, event.namaLayanan];
-      emit(PengajuanState(baru));
+      if (state.daftar.contains(event.namaLayanan)) return;
+      emit(PengajuanState([...state.daftar, event.namaLayanan]));
     });
-
-    on<HapusPengajuan>((event, emit) {
-      final baru = state.daftar
-          .where((n) => n != event.namaLayanan)
-          .toList();
-      emit(PengajuanState(baru));
-    });
-
     on<KosongkanPengajuan>((event, emit) {
       emit(const PengajuanState([]));
     });
